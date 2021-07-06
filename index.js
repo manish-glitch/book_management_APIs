@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 //database
-const database=require("./database");
+const database=require("./Database/database");
 
 //initialization
 const booky= express();
