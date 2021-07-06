@@ -31,8 +31,9 @@ Access       public
 Parameters   none
 Methods      get
 */
-booky.get("/", (req,res)=>{
-    return res.json({books: database.books});
+booky.get("/", async(req,res)=>{
+    const getAllBooks= await bookModel.find();
+    return res.json({books:getAllBooks});
 }
 );
 
@@ -43,12 +44,15 @@ Access       public
 Parameters   isbn
 Methods      get
 */
-booky.get("/is/:isbn", (req, res)=>{
-    const getSpecificBook = database.books.filter(
-        (book)=>book.ISBN === req.params.isbn
-        );
-        
-    if(getSpecificBook.length===0){
+booky.get("/is/:isbn", async(req, res)=>{
+    const getSpecificBook= await bookModel.findOne({ISBN:req.params.isbn});
+//if not found anything above will return null(false)
+    //const getSpecificBook = database.books.filter(
+      //  (book)=>book.ISBN === req.params.isbn
+        //);
+        //below we converted the null(false to true) by "!", so when above situation happens getspecificbook
+        //will get null we will create null to true and then below if will take place
+    if(!getSpecificBook){
         return res.json({error: `no book found for the ISBN of ${req.params.isbn}`},)
     }
 
