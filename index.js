@@ -302,4 +302,131 @@ booky.put("/publication/update/book/:isbn",(req,res)=>{
     });
 })
 
+/*
+Route        "/book/delete"
+Description  delete book
+Access       public
+Parameters   isbn
+Methods      delete
+here we are preparing a whole database with removal of respective 
+book (provided isbn) with new databse. we dont have to do this in 
+mongoDB database
+*/
+
+booky.delete("/book/delete/:isbn",(req,res)=>{
+    const updatedBookDatabase =database.books.filter(
+        (book)=>book.ISBN!==req.params.isbn
+    );
+//filter will always return a new
+    database.books = updatedBookDatabase;
+    return res.json({books:database.books});
+
+});
+
+
+/*
+Route        "/book/delete/author"
+Description  delete an author form book
+Access       public
+Parameters   isbn,authorId
+Methods      delete
+*/
+booky.delete("/book/delete/author/:isbn/:authorId",(req,res)=>{
+    //update book data
+    database.books.forEach((book)=>{
+        if(book.ISBN === req.params.isbn){
+            const newAuthorList = book.author.filter(
+                (author)=> author  !== parseInt(req.params.authorId));
+            book.author= newAuthorList;
+            
+            return;
+        }
+    });
+
+    //update author database
+    database.authors.forEach((author)=>{
+        if(author.ID===parseInt(req.params.authorId)){
+            const newBooksList= author.books.filter(
+                (book)=> book !== req.params.isbn
+                );
+                author.books=newBooksList;
+                return;
+        }
+    });
+    return res.json({books:database.books, author:database.authors, message:"author deleted"})
+});
+
+/*
+Route        "/author/delete"
+Description  delete author
+Access       public
+Parameters   ID
+Methods      delete
+here we are preparing a whole database with removal of respective 
+author (provided id) with new databse. we dont have to do this in 
+mongoDB database
+*/
+booky.delete("/author/delete/:id",(req,res)=>{
+    const updatedAuthorDatabase =database.authors.filter(
+        (author)=>author.ID!==parseInt(req.params.id)
+    );
+//filter will always return a new
+    database.authors = updatedAuthorDatabase;
+    return res.json({authors:database.authors});
+
+});
+
+/*
+Route        "/publication/delete"
+Description  delete publication
+Access       public
+Parameters   id
+Methods      delete
+here we are preparing a whole database with removal of respective 
+publication (provided id) with new databse. we dont have to do this in 
+mongoDB database
+*/
+booky.delete("/publication/delete/:id",(req,res)=>{
+    const updatedPublicationDatabase =database.publications.filter(
+        (publication)=>publication.id!==parseInt(req.params.id)
+    );
+//filter will always return a new
+    database.publications = updatedPublicationDatabase;
+    return res.json({publications:database.publications});
+
+});
+
+
+/*
+Route        "/publication/delete/book"
+Description  delete a book  form publication
+Access       public
+Parameters   isbn, publication id
+Methods      delete
+*/
+booky.delete("/publication/delete/book/:isbn/:pubId",(req,res)=>{
+    //update publication data
+    database.publications.forEach((publication)=>{
+        if(publication.id === parseInt(req.params.pubId)){
+            const newBookList = publication.books.filter(
+                (book)=> book  !== req.params.isbn
+            );
+            publication.books= newBookList; 
+            return;
+        }
+    });
+
+    //update book database
+    database.books.forEach((book)=>{
+        if(book.ISBN===req.params.isbn){
+            const newPubList= book.publication.filter(
+                (publication)=> publication !== parseInt(req.params.pubId)
+                );
+            book.publication=newPubList;
+            return;
+        }
+    });
+    return res.json({publications:database.publications, books:database.books, message:"book deleted"})
+});
+
 booky.listen(3000, ()=> console.log("server is running"));
