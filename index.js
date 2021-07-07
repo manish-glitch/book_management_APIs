@@ -8,6 +8,7 @@ const database=require("./Database/database");
 const bookModel = require("./Database/book");
 const authorModel = require("./Database/author");
 const publicationModel = require("./Database/publication");
+const { parse } = require("dotenv");
 
 //initialization
 const booky= express();
@@ -251,15 +252,29 @@ Parameters   isbn
 Methods      put
 */
 
-booky.put("/book/update/title/:isbn",(req,res)=>{
-    //using forEach
-    database.books.forEach((book)=>{
-        if(book.ISBN===req.params.isbn){
-            book.title=req.body.newBookTitle;
-            return;
+booky.put("/book/update/title/:isbn", async (req,res)=>{
+
+    const updatedBook = await bookModel.findOneAndUpdate(
+        {
+        ISBN: req.params.isbn,
+        },
+        
+        {
+            title: req.body.newBookTitle,
+        },
+        {
+            new: true,
         }
-    });
-    return res.json({books:database.books});
+);
+
+    //using forEach
+    //database.books.forEach((book)=>{
+      //  if(book.ISBN===req.params.isbn){
+        //    book.title=req.body.newBookTitle;
+          //  return;
+       // }
+    //});
+    return res.json({books:updatedBook});
 });
 
 /*
@@ -269,20 +284,51 @@ Access       public
 Parameters   isbn
 Methods      put
 */
-booky.put("/book/update/author/:isbn/:authorId",(req,res)=>{
+booky.put("/book/update/author/:isbn", async(req,res)=>{
     //update book database
-    database.books.forEach((book)=>{
-        if(book.ISBN===req.params.isbn){
-            return book.author.push(parseInt(req.params.authorId));
+    const updatedBookAuthor = await bookModel.findOneAndUpdate(
+        {
+            ISBN: req.params.isbn,
+        },
+        {//as author is array we need to addToSet as author id should not repeat 
+            $addToSet:{
+                author: req.body.authorId,
+            },
+        },
+        {
+            new : true,
         }
-    })
+        
+)
     //update author database
-    database.authors.forEach((author)=>{
-        if(author.ID===parseInt(req.params.authorId))
-            return author.books.push(req.params.isbn);
-    });
+    const updatedAuthorBook = await authorModel.findOneAndUpdate(
+        {
+            ID: req.body.authorId,
+        },
+        {//as books is array we will use addtoset beacause we dont want same book double
+            $addToSet:{
+                books: req.params.isbn,
+            },
+    
+        },
+        {
+            new:true,
+        }
+    );
 
-    return res.json({books:database.books, author:database.authors});
+    //update book database
+    //database.books.forEach((book)=>{
+      //  if(book.ISBN===req.params.isbn){
+        //    return book.author.push(parseInt(req.params.authorId));
+        //}
+    //})
+    //update author database
+    //database.authors.forEach((author)=>{
+      //  if(author.ID===parseInt(req.params.authorId))
+        //    return author.books.push(req.params.isbn);
+    //});
+
+    return res.json({books:updatedBookAuthor, author:updatedAuthorBook});
 });
 
 /*
@@ -292,14 +338,29 @@ Access       public
 Parameters   ID
 Methods      put
 */
-booky.put("/author/update/:id",(req,res)=>{
-    database.authors.forEach((author)=>{
-        if(author.ID===parseInt(req.params.id)){
-            author.name=req.body.newName;
-            return;
-        }
-    });
-    return res.json({author:database.authors});
+booky.put("/author/update/:id",async(req,res)=>{
+    
+    const authorNewName = await authorModel.findOneAndUpdate(
+       {
+            ID: parseInt(req.params.id),
+       },
+       {
+           name:req.body.newName,
+       },
+       {
+           new:true,
+       }
+       
+);
+   
+   
+    //database.authors.forEach((author)=>{
+      //  if(author.ID===parseInt(req.params.id)){
+        //    author.name=req.body.newName;
+          //  return;
+        //}
+    //});
+    return res.json({author:authorNewName});
 })
 /*
 Route        "/publication/update/"
@@ -308,14 +369,28 @@ Access       public
 Parameters   id
 Methods      put
 */
-booky.put("/publication/update/:id",(req,res)=>{
-    database.publications.forEach((publication)=>{
-        if(publication.id===parseInt(req.params.id)){
-            publication.name=req.body.newPubName;
-            return;
+booky.put("/publication/update/:id",async(req,res)=>{
+   
+    const newPubName = await publicationModel.findOneAndUpdate(
+        {
+            id:parseInt(req.params.id),
+        },
+        {
+            name: req.body.newName,
+        },
+        {
+            new:true,
         }
-    });
-    return res.json({publications:database.publications});
+);
+   
+   
+    // database.publications.forEach((publication)=>{
+     //   if(publication.id===parseInt(req.params.id)){
+       //     publication.name=req.body.newPubName;
+         //   return;
+        //}
+    //});
+    return res.json({publications:newPubName});
 })
 
 /*
@@ -325,23 +400,52 @@ Access       public
 Parameters   isbn
 Methods      put
 */
-booky.put("/publication/update/book/:isbn",(req,res)=>{
+booky.put("/publication/update/book/:isbn",async(req,res)=>{
     //update publication database
-    database.publications.forEach((publication)=>{
-        if(publication.id===req.body.pubId){
-            return publication.books.push(req.params.isbn)
+    const newPub= await publicationModel.findOneAndUpdate(
+        {
+            Id: req.body.pubId,
+        },
+        {
+            $addToSet:{
+                books: req.params.isbn
+            },
+        },
+        {
+            new:true,
         }
-    });
-    //update book database
-    database.books.forEach((book)=>{
-        if(book.ISBN===req.params.isbn){
-            return book.publication=req.body.pubId;
+);
+   
+    const newPubBook= await bookModel.findOneAndUpdate(
+        {
+            ISBN: req.params.isbn,
             
+        },
+        {
+            $addToSet:{
+                publication: req.body.pubId,
+            },
+        },
+        {
+            new : true,
         }
-    });
+);
+    //update publication database
+   // database.publications.forEach((publication)=>{
+     //   if(publication.id===req.body.pubId){
+       //     return publication.books.push(req.params.isbn)
+        //}
+    //});
+    //update book database
+    //database.books.forEach((book)=>{
+      //  if(book.ISBN===req.params.isbn){
+        //    return book.publication=req.body.pubId;
+            
+       // }
+    //});
     return res.json({
-        books:database.books,
-        publications:database.publications,
+        books:newPubBook,
+        publications:newPub,
         message:"all work done without any error",
     });
 })
