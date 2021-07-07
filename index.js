@@ -461,13 +461,32 @@ book (provided isbn) with new databse. we dont have to do this in
 mongoDB database
 */
 
-booky.delete("/book/delete/:isbn",(req,res)=>{
-    const updatedBookDatabase =database.books.filter(
-        (book)=>book.ISBN!==req.params.isbn
+booky.delete("/book/delete/:isbn", async (req,res)=>{
+    
+    const updatedBookDatabase= await bookModel.findOneAndDelete({ISBN: req.params.isbn});
+     //bestest logic ever here we found author who is having the same book that we are deleting
+     //so that means we should also remove the respective book from the author's books array
+     //we did it by matching the book's isbn in authors books array by using $in and then pulled that book out
+     //fucking awsome
+    const relatedAuthor = await authorModel.findOneAndUpdate(
+        {books:{$in:[req.params.isbn]}},
+        {$pull:{books:req.params.isbn}},
+        {new:true},
+        
     );
+    
+    const relatedPub = await publicationModel.findOneAndUpdate(
+        {books:{$in:[req.params.isbn]}},
+        {$pull:{books:req.params.isbn}},
+        {new:true},
+        
+    );
+    //const updatedBookDatabase =database.books.filter(
+      //  (book)=>book.ISBN!==req.params.isbn
+    //);
 //filter will always return a new
-    database.books = updatedBookDatabase;
-    return res.json({books:database.books});
+    //database.books = updatedBookDatabase;
+    return res.json({books:updatedBookDatabase,authors:relatedAuthor,publications:relatedPub, message:"deleted book"});
 
 });
 
@@ -479,29 +498,54 @@ Access       public
 Parameters   isbn,authorId
 Methods      delete
 */
-booky.delete("/book/delete/author/:isbn/:authorId",(req,res)=>{
+booky.delete("/book/delete/author/:isbn/:authorId",async(req,res)=>{
     //update book data
-    database.books.forEach((book)=>{
-        if(book.ISBN === req.params.isbn){
-            const newAuthorList = book.author.filter(
-                (author)=> author  !== parseInt(req.params.authorId));
-            book.author= newAuthorList;
+
+    const updatedBook = await bookModel.findOneAndUpdate(
+        {
+            ISBN: req.params.isbn,
+        },
+        {
+            $pull:{
+                author: parseInt(req.params.authorId),
+            },
+        },
+        {new:true},
+    );
+        //update author data
+        const updatedAuthor= await authorModel.findOneAndUpdate(
+            {
+                ID:parseInt(req.params.authorId),
+            },
+            {
+                $pull:{
+                    books: req.params.isbn,
+                },
+            },
+            {new:true},
+        );
+
+    // database.books.forEach((book)=>{
+    //     if(book.ISBN === req.params.isbn){
+    //         const newAuthorList = book.author.filter(
+    //             (author)=> author  !== parseInt(req.params.authorId));
+    //         book.author= newAuthorList;
             
-            return;
-        }
-    });
+    //         return;
+    //     }
+    // });
 
     //update author database
-    database.authors.forEach((author)=>{
-        if(author.ID===parseInt(req.params.authorId)){
-            const newBooksList= author.books.filter(
-                (book)=> book !== req.params.isbn
-                );
-                author.books=newBooksList;
-                return;
-        }
-    });
-    return res.json({books:database.books, author:database.authors, message:"author deleted"})
+    // database.authors.forEach((author)=>{
+    //     if(author.ID===parseInt(req.params.authorId)){
+    //         const newBooksList= author.books.filter(
+    //             (book)=> book !== req.params.isbn
+    //             );
+    //             author.books=newBooksList;
+    //             return;
+    //     }
+    // });
+    return res.json({books:updatedBook, author:updatedAuthor, message:"author deleted"})
 });
 
 /*
@@ -514,13 +558,15 @@ here we are preparing a whole database with removal of respective
 author (provided id) with new databse. we dont have to do this in 
 mongoDB database
 */
-booky.delete("/author/delete/:id",(req,res)=>{
-    const updatedAuthorDatabase =database.authors.filter(
-        (author)=>author.ID!==parseInt(req.params.id)
-    );
-//filter will always return a new
-    database.authors = updatedAuthorDatabase;
-    return res.json({authors:database.authors});
+booky.delete("/author/delete/:id", async (req,res)=>{
+    const updatedAuthorDatabase= await authorModel.findOneAndDelete({ID: parseInt(req.params.id)});
+
+    //     const  =database.authors.filter(
+//         (author)=>author.ID!==parseInt(req.params.id)
+//     );
+// //filter will always return a new
+//     database.authors = updatedAuthorDatabase;
+    return res.json({authors:updatedAuthorDatabase});
 
 });
 
@@ -534,13 +580,15 @@ here we are preparing a whole database with removal of respective
 publication (provided id) with new databse. we dont have to do this in 
 mongoDB database
 */
-booky.delete("/publication/delete/:id",(req,res)=>{
-    const updatedPublicationDatabase =database.publications.filter(
-        (publication)=>publication.id!==parseInt(req.params.id)
-    );
-//filter will always return a new
-    database.publications = updatedPublicationDatabase;
-    return res.json({publications:database.publications});
+booky.delete("/publication/delete/:id",async (req,res)=>{
+    const updatedPublicationDatabase= await publicationModel.findOneAndDelete({Id: parseInt(req.params.id)});
+
+    //     const updatedPublicationDatabase =database.publications.filter(
+//         (publication)=>publication.id!==parseInt(req.params.id)
+//     );
+// //filter will always return a new
+//     database.publications = updatedPublicationDatabase;
+    return res.json({publications:updatedPublicationDatabase});
 
 });
 
