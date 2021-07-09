@@ -26,7 +26,7 @@ Methods      get
 */
 Router.get("/pid/:id", async (req,res)=>{
 
-    const getSpecificPub= await publicationModel.findOne({id:req.params.id})
+    const getSpecificPub= await publicationModel.findOne({Id:parseInt(req.params.id)})
     
     //const getSpecificPub = database.publications.filter(
       //  (publication)=>publication.id === parseInt(req.params.id)
@@ -65,7 +65,7 @@ Router.put("/update/:id",async(req,res)=>{
    
     const newPubName = await publicationModel.findOneAndUpdate(
         {
-            id:parseInt(req.params.id),
+            Id:parseInt(req.params.id),
         },
         {
             name: req.body.newName,

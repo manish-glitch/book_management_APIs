@@ -2,7 +2,7 @@ const Router = require("express").Router();
 
 const bookModel = require("../../Database/book");
 const authorModel = require("../../Database/author");
-const publicationModel = require("../../Database/publication");
+
 
 /*
 Route        "/author"
@@ -109,6 +109,30 @@ Router.put("/update/:id",async(req,res)=>{
     //});
     return res.json({author:authorNewName});
 });
+
+
+/*
+Route        "/author/update/book"
+Description  add new book to author's book
+Access       public
+Parameters   ID
+Methods      put
+*/
+Router.put("/update/book/:id", async (req,res)=>{
+    const addBookAuthor= await authorModel.findOneAndUpdate(
+        {
+            ID: req.params.id,
+        },
+        {
+            $addToSet:{
+                books: req.body.newBook,
+            },
+        },
+        {new:true}
+        );
+        return res.json({author:addBookAuthor});
+});
+
 
 
 /*

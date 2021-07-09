@@ -95,8 +95,8 @@ Router.post("/add", async (req,res)=>{
     
 
     const addNewBook = await bookModel.create(newBook);
-   
-
+    
+ 
    // database.books.push(newBook);
     return res.json({books:addNewBook, message:"book is added"});
 });
